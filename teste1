@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo Pong</title>
+    <style>
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background: #000; 
+        }
+        canvas { 
+            border: 1px solid white; 
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pong" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("pong");
+        const context = canvas.getContext("2d");
+
+        // Criar a raquete
+        const paddleWidth = 10;
+        const paddleHeight = 100;
+        const player = {
+            x: 0,
+            y: canvas.height / 2 - paddleHeight / 2,
+            width: paddleWidth,
+            height: paddleHeight,
+            color: "white",
+            score: 0
+        };
+        const computer = {
+            x: canvas.width - paddleWidth,
+            y: canvas.height / 2 - paddleHeight / 2,
+            width: paddleWidth,
+            height: paddleHeight,
+            color: "white",
+            score: 0
+        };
+
+        // Criar a bola
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 10,
+            speed: 5,
+            velocityX: 5,
+            velocityY: 5,
+            color: "white"
+        };
+
+        // Desenhar elementos
+        function draw() {
+            // Limpar o canvas
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            // Desenhar a raquete do jogador
+            context.fillStyle = player.color;
+            context.fillRect(player.x, player.y, player.width, player.height);
+            // Desenhar a raquete do computador
+            context.fillStyle = computer.color;
+            context.fillRect(computer.x, computer.y, computer.width, computer.height);
+            // Desenhar a bola
+            context.fillStyle = ball.color;
+            context.beginPath();
+            context.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2, false);
+            context.closePath();
+            context.fill();
+            // Desenhar pontuação
+            context.fillStyle = "white";
+            context.font = "20px Arial";
+            context.fillText(player.score, canvas.width / 4, canvas.height / 5);
+            context.fillText(computer.score, 3 * canvas.width / 4, canvas.height / 5);
+        }
+
+        // Atualizar a posição da bola
+        function update() {
+            ball.x += ball.velocityX;
+            ball.y += ball.velocityY;
+
+            // Colisões com as paredes
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                ball.velocityY = -ball.velocityY;
+            }
+
+            // Colisões com as raquetes
+            const playerHit = ball.x - ball.radius < player.x + player.width && 
+                              ball.y > player.y && 
+                              ball.y < player.y + player.height;
+            const computerHit = ball.x + ball.radius > computer.x && 
+                                ball.y > computer.y && 
+                                ball.y < computer.y + computer.height;
+
+            if (playerHit) {
+                ball.velocityX = -ball.velocityX;
+            }
+
+            if (computerHit) {
+                ball.velocityX = -ball.velocityX;
+            }
+
+            // Marcar ponto
+            if (ball.x + ball.radius < 0) {
+                computer.score++;
+                resetBall();
+            } else if (ball.x - ball.radius > canvas.width) {
+                player.score++;
+                resetBall();
+            }
+        }
+
+        // Reiniciar a posição da bola
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.velocityX = -ball.velocityX;
+        }
+
+        // Controlar a raquete do jogador
+        document.addEventListener("mousemove", function(event) {
+            const rect = canvas.getBoundingClientRect();
+            player.y = event.clientY - rect.top - player.height / 2;
+            // Limitar a raquete do jogador dentro da tela
+            if (player.y < 0) player.y = 0;
+            if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+        });
+
+        // Controlar a raquete do computador
+        function moveComputer() {
+            const computerLevel = 0.1; // Nível de dificuldade
+            if (ball.y > computer.y + computer.height) {
+                computer.y += computerLevel;
+            } else {
+                computer.y -= computerLevel;
+            }
+            // Limitar a raquete do computador dentro da tela
+            if (computer.y < 0) computer.y = 0;
+            if (computer.y + computer.height > canvas.height) computer.y = canvas.height - computer.height;
+        }
+
+        // Atualizar o jogo
+        function game() {
+            draw();
+            update();
+            moveComputer();
+            requestAnimationFrame(game);
+        }
+
+        game(); // Iniciar o jogo
+    </script>
+</body>
+</html>
